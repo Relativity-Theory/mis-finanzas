@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finanzas Personales</title>
+    <title>Finanzas Control Total</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --bg: #f2f2f7; --card: #ffffff; --text-main: #1c1c1e; --text-sec: #8e8e93;
@@ -20,7 +21,7 @@
         .page { display: none; width: 100%; max-width: 400px; flex-direction: column; }
         .page.active { display: flex; }
 
-        /* HEADER */
+        /* CABECERA Y SALDOS */
         .header { width: 100%; margin: 10px 0 15px 0; }
         .label-top { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-sec); }
         .balance-main { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; }
@@ -47,7 +48,13 @@
         .btn-black { background: var(--text-main); color: white; width: 100%; margin-top: 8px; }
         .btn-secondary { background: #e5e5ea; color: black; width: 100%; margin-top: 20px; }
 
-        /* CALENDARIO */
+        /* TABLAS Y RESUMEN */
+        .section-title { font-size: 1rem; font-weight: 800; margin: 25px 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 18px; overflow: hidden; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        td { padding: 12px; border-top: 1px solid var(--bg); font-size: 0.8rem; }
+        .status-tag { padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+
+        /* CALENDARIO AL FINAL */
         .cal-container {
             width: 100%; max-width: 400px; background: var(--card);
             border-radius: 20px; padding: 12px 15px; margin-top: 30px;
@@ -58,12 +65,7 @@
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
         .cal-day-name { font-size: 0.6rem; color: var(--text-sec); font-weight: 800; padding-bottom: 4px; }
         .cal-day { font-size: 0.75rem; font-weight: 500; padding: 5px 0; border-radius: 8px; }
-        .cal-today { background: var(--text-main); color: white; font-weight: 700; }
-
-        /* LISTAS */
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 18px; overflow: hidden; margin-top: 8px; }
-        td { padding: 12px; border-top: 1px solid var(--bg); font-size: 0.8rem; }
-        .status-tag { padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+        .cal-today { background: var(--accent); color: white; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -93,6 +95,9 @@
     <button class="btn-black" onclick="navegar('fijos-page')">Gastos Fijos</button>
     <button class="btn-black" style="background: var(--accent);" onclick="navegar('metas-page')">🎯 Metas de Ahorro</button>
 
+    <div class="section-title">Últimos Movimientos</div>
+    <table> <tbody id="lista-movs"></tbody> </table>
+
     <div class="cal-container">
         <div class="cal-header">
             <div class="cal-month" id="cal-month-name">Mes</div>
@@ -100,6 +105,8 @@
         </div>
         <div class="cal-grid" id="cal-days-grid"></div>
     </div>
+
+    <button class="btn-secondary" style="margin-top: 30px; font-size: 0.75rem;" onclick="descargarExcel()">📥 Descargar Reporte Excel</button>
 </div>
 
 <div id="deuda-page" class="page">
@@ -117,14 +124,14 @@
 </div>
 
 <div id="metas-page" class="page">
-    <div class="header"><h3>Metas de Ahorro</h3><p style="font-size: 0.8rem; color: var(--text-sec);">Cosas para las que estás guardando dinero</p></div>
+    <div class="header"><h3>Metas de Ahorro</h3></div>
     <button class="btn-black" onclick="agregarItem('metas')">+ Nueva Meta</button>
     <table> <tbody id="lista-metas"></tbody> </table>
     <button class="btn-secondary" onclick="navegar('main-page')">Volver</button>
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('finanzas_v_final_metas')) || { 
+    let db = JSON.parse(localStorage.getItem('finanzas_v_completa')) || { 
         total: 0, ahorro: 0, movs: [], deudas: [], fijos: [], metas: [] 
     };
 
@@ -137,7 +144,6 @@
     }
 
     function actualizar() {
-        // Actualizar saldos principales
         document.getElementById('disp-total').innerText = fmt(db.total);
         document.getElementById('disp-ahorro').innerText = fmt(db.ahorro);
         
@@ -154,23 +160,37 @@
         if(document.getElementById('disp-deuda-page')) document.getElementById('disp-deuda-page').innerText = fmt(dPend);
         if(document.getElementById('disp-fijos-page')) document.getElementById('disp-fijos-page').innerText = fmt(fPend);
 
+        renderMovs();
         renderLista('lista-deudas', db.deudas, 'deudas');
         renderLista('lista-fijos', db.fijos, 'fijos');
         renderLista('lista-metas', db.metas, 'metas');
 
-        localStorage.setItem('finanzas_v_final_metas', JSON.stringify(db));
+        localStorage.setItem('finanzas_v_completa', JSON.stringify(db));
+    }
+
+    function renderMovs() {
+        const tb = document.getElementById('lista-movs');
+        tb.innerHTML = '';
+        // Mostramos solo los últimos 5 movimientos
+        db.movs.slice(-5).reverse().forEach((m, idx) => {
+            const color = m.tipo === 'INGRESO' ? 'var(--success)' : (m.tipo === 'AHORRO' ? 'var(--accent)' : 'var(--danger)');
+            tb.innerHTML += `<tr>
+                <td>${m.motivo}</td>
+                <td style="color:${color}; font-weight:700">${m.tipo === 'INGRESO' ? '+' : '-'}${fmt(m.monto)}</td>
+                <td style="color:var(--text-sec); font-size:0.6rem">${new Date(m.fechaFull).toLocaleDateString()}</td>
+            </tr>`;
+        });
     }
 
     function renderLista(id, lista, key) {
         const tb = document.getElementById(id); if(!tb) return;
         tb.innerHTML = '';
         lista.forEach((item, idx) => {
-            const labelEstado = key === 'metas' ? (item.estado === 'pendiente' ? 'Pendiente' : 'Lograda ✨') : item.estado;
             tb.innerHTML += `<tr>
                 <td style="font-weight:600">${item.motivo}</td>
                 <td>${fmt(item.monto)}</td>
-                <td><span class="status-tag" style="background:${item.estado==='pendiente'?'#fff3e0':'#e8f5e9'}" onclick="toggle('${key}',${idx})">${labelEstado}</span></td>
-                <td onclick="eliminar('${key}',${idx})" style="color:var(--danger); font-weight:bold; cursor:pointer; padding-left:10px;">✕</td>
+                <td><span class="status-tag" style="background:${item.estado==='pendiente'?'#fff3e0':'#e8f5e9'}" onclick="toggle('${key}',${idx})">${item.estado}</span></td>
+                <td onclick="eliminar('${key}',${idx})" style="color:var(--danger); cursor:pointer">✕</td>
             </tr>`;
         });
     }
@@ -186,13 +206,20 @@
     }
 
     function agregarItem(k) {
-        const mot = prompt(k === 'metas' ? "¿Para qué quieres ahorrar?" : "Descripción:"); 
-        const mon = parseInt(prompt("Monto:"));
+        const mot = prompt("Descripción:"); const mon = parseInt(prompt("Monto:"));
         if(mot && !isNaN(mon)) { db[k].push({motivo:mot, monto:mon, estado:'pendiente'}); actualizar(); }
     }
 
-    function toggle(k,i) { db[k][i].estado = db[k][i].estado==='pendiente'?'completado':'pendiente'; actualizar(); }
-    function eliminar(k,i) { if(confirm("¿Eliminar este registro?")) { db[k].splice(i,1); actualizar(); } }
+    function toggle(k,i) { db[k][i].estado = db[k][i].estado==='pendiente'?'pagado':'pendiente'; actualizar(); }
+    function eliminar(k,i) { if(confirm("¿Eliminar?")) { db[k].splice(i,1); actualizar(); } }
+
+    function descargarExcel() {
+        const dataMovs = db.movs.map(m => ({ Fecha: new Date(m.fechaFull).toLocaleDateString(), Tipo: m.tipo, Motivo: m.motivo, Monto: m.monto }));
+        const ws = XLSX.utils.json_to_sheet(dataMovs);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Movimientos");
+        XLSX.writeFile(wb, "Finanzas_Reporte.xlsx");
+    }
 
     function renderCalendario() {
         const ahora = new Date();
