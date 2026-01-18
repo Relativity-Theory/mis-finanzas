@@ -3,200 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finanzas Minimal</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>Finanzas Personales</title>
     <style>
         :root {
-            --bg: #f2f2f7; /* Gris Apple */
-            --card: #ffffff;
-            --text-main: #1c1c1e;
-            --text-sec: #8e8e93;
-            --accent: #007aff;
-            --danger: #ff3b30;
-            --success: #34c759;
+            --bg: #f2f2f7; --card: #ffffff; --text-main: #1c1c1e; --text-sec: #8e8e93;
+            --accent: #007aff; --danger: #ff3b30; --success: #34c759; --warning: #ff9500;
         }
 
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text-main); 
-            margin: 0; padding: env(safe-area-inset-top) 20px 40px 20px;
+            background-color: var(--bg); color: var(--text-main); 
+            margin: 0; padding: 20px 15px 40px 15px;
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Título y Balance */
-        .header { width: 100%; max-width: 450px; margin: 30px 0; }
-        .label-top { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-sec); margin-bottom: 5px; }
-        .balance-main { font-size: 2.8rem; font-weight: 800; letter-spacing: -1px; }
+        .page { display: none; width: 100%; max-width: 400px; flex-direction: column; }
+        .page.active { display: flex; }
 
-        /* Cuadro Gastos del Mes - Estilo High-End */
-        .gastos-card {
-            width: 100%; max-width: 450px;
-            background: var(--text-main);
-            color: white;
-            border-radius: 20px;
-            padding: 25px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-            margin-bottom: 25px;
-            box-sizing: border-box;
-        }
-        .gastos-card span:first-child { font-size: 0.9rem; font-weight: 500; opacity: 0.8; }
-        .gastos-card span:last-child { font-size: 1.6rem; font-weight: 700; }
+        /* HEADER */
+        .header { width: 100%; margin: 10px 0 15px 0; }
+        .label-top { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-sec); }
+        .balance-main { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; }
 
-        /* Ahorro Secundario */
-        .savings-row {
-            width: 100%; max-width: 450px;
-            background: var(--card);
-            padding: 18px 25px;
-            border-radius: 18px;
-            display: flex; justify-content: space-between;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            box-sizing: border-box;
+        .card-dark {
+            background: var(--text-main); color: white; border-radius: 20px; padding: 18px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
         }
 
-        /* Botones */
-        .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 450px; }
-        button { 
-            border: none; padding: 18px; border-radius: 16px; font-weight: 600; font-size: 0.95rem;
-            transition: transform 0.1s ease, opacity 0.2s; cursor: pointer;
+        .info-row {
+            background: var(--card); padding: 14px 18px; border-radius: 16px;
+            display: flex; justify-content: space-between; margin-bottom: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02); font-size: 0.9rem;
         }
-        button:active { transform: scale(0.97); opacity: 0.8; }
+
+        /* BOTONES */
+        .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        button { border: none; padding: 15px; border-radius: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+        button:active { transform: scale(0.96); opacity: 0.8; }
         
         .btn-in { background: #e8f5e9; color: var(--success); }
         .btn-out { background: #ffebee; color: var(--danger); }
-        .btn-save { background: #e3f2fd; color: var(--accent); grid-column: span 2; margin-top: 5px; }
+        .btn-save { background: #e3f2fd; color: var(--accent); grid-column: span 2; }
+        .btn-black { background: var(--text-main); color: white; width: 100%; margin-top: 8px; }
+        .btn-secondary { background: #e5e5ea; color: black; width: 100%; margin-top: 20px; }
 
-        /* Tabla Estilo Minimal */
-        .history-section { width: 100%; max-width: 450px; margin-top: 35px; }
-        .history-section h3 { font-size: 1.1rem; margin-bottom: 15px; padding-left: 5px; }
-        
-        .table-wrapper { background: var(--card); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th { text-align: left; padding: 15px; color: var(--text-sec); font-weight: 500; font-size: 0.75rem; text-transform: uppercase; }
-        td { padding: 15px; border-top: 1px solid var(--bg); }
-        .td-monto { font-weight: 600; }
-
-        /* Botón Excel */
-        .btn-excel {
-            width: 100%; max-width: 450px; background: var(--accent); color: white;
-            margin-top: 30px; display: flex; justify-content: center; align-items: center; gap: 10px;
+        /* CALENDARIO */
+        .cal-container {
+            width: 100%; max-width: 400px; background: var(--card);
+            border-radius: 20px; padding: 12px 15px; margin-top: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.05); box-sizing: border-box;
         }
+        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .cal-month { font-size: 1.1rem; font-weight: 800; text-transform: capitalize; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+        .cal-day-name { font-size: 0.6rem; color: var(--text-sec); font-weight: 800; padding-bottom: 4px; }
+        .cal-day { font-size: 0.75rem; font-weight: 500; padding: 5px 0; border-radius: 8px; }
+        .cal-today { background: var(--text-main); color: white; font-weight: 700; }
+
+        /* LISTAS */
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 18px; overflow: hidden; margin-top: 8px; }
+        td { padding: 12px; border-top: 1px solid var(--bg); font-size: 0.8rem; }
+        .status-tag { padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div class="label-top">Disponible</div>
-    <div class="balance-main" id="disp-total">$0</div>
-</div>
+<div id="main-page" class="page active">
+    <div class="header">
+        <div class="label-top">Disponible</div>
+        <div class="balance-main" id="disp-total">$0</div>
+    </div>
 
-<div class="gastos-card">
-    <span>GASTOS DEL MES</span>
-    <span id="disp-gastos-mes">$0</span>
-</div>
+    <div class="card-dark">
+        <span style="font-size: 0.75rem; opacity: 0.8;">GASTOS DEL MES</span>
+        <span id="disp-gastos-mes" style="font-weight: 700;">$0</span>
+    </div>
 
-<div class="savings-row">
-    <span style="color: var(--text-sec); font-weight: 500;">Ahorro Acumulado</span>
-    <span style="font-weight: 700;" id="disp-ahorro">$0</span>
-</div>
+    <div class="info-row"><span>Ahorro Acumulado</span><span id="disp-ahorro" style="font-weight:700; color:var(--accent)">$0</span></div>
+    <div class="info-row"><span>Deuda Histórica</span><span id="disp-deuda-total" style="font-weight:700; color:var(--danger)">$0</span></div>
+    <div class="info-row"><span>Gastos fijos del mes</span><span id="disp-fijos-total" style="font-weight:700; color:var(--warning)">$0</span></div>
 
-<div class="actions-grid">
-    <button class="btn-in" onclick="registrar('ingreso')">Ingreso (+)</button>
-    <button class="btn-out" onclick="registrar('gasto')">Gasto (-)</button>
-    <button class="btn-save" onclick="registrar('ahorro')">Mover a Ahorro</button>
-</div>
+    <div class="actions-grid">
+        <button class="btn-in" onclick="registrar('ingreso')">Ingreso (+)</button>
+        <button class="btn-out" onclick="registrar('gasto')">Gasto (-)</button>
+        <button class="btn-save" onclick="registrar('ahorro')">Ahorrar</button>
+    </div>
 
-<div class="history-section">
-    <h3>Movimientos Recientes</h3>
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Motivo</th>
-                    <th>Monto</th>
-                </tr>
-            </thead>
-            <tbody id="lista-movs"></tbody>
-        </table>
+    <button class="btn-black" onclick="navegar('deuda-page')">Gestionar Deudas</button>
+    <button class="btn-black" onclick="navegar('fijos-page')">Gastos Fijos</button>
+    <button class="btn-black" style="background: var(--accent);" onclick="navegar('metas-page')">🎯 Metas de Ahorro</button>
+
+    <div class="cal-container">
+        <div class="cal-header">
+            <div class="cal-month" id="cal-month-name">Mes</div>
+            <div style="font-size: 0.65rem; font-weight: 700; color: var(--accent);">HOY</div>
+        </div>
+        <div class="cal-grid" id="cal-days-grid"></div>
     </div>
 </div>
 
-<button class="btn-excel" onclick="descargarExcel()">
-    Descargar Reporte Excel
-</button>
+<div id="deuda-page" class="page">
+    <div class="header"><h3>Deudas</h3><h2 id="disp-deuda-page">$0</h2></div>
+    <button class="btn-black" onclick="agregarItem('deudas')">+ Nueva Deuda</button>
+    <table> <tbody id="lista-deudas"></tbody> </table>
+    <button class="btn-secondary" onclick="navegar('main-page')">Volver</button>
+</div>
+
+<div id="fijos-page" class="page">
+    <div class="header"><h3>Gastos Fijos</h3><h2 id="disp-fijos-page">$0</h2></div>
+    <button class="btn-black" onclick="agregarItem('fijos')">+ Nuevo Gasto Fijo</button>
+    <table> <tbody id="lista-fijos"></tbody> </table>
+    <button class="btn-secondary" onclick="navegar('main-page')">Volver</button>
+</div>
+
+<div id="metas-page" class="page">
+    <div class="header"><h3>Metas de Ahorro</h3><p style="font-size: 0.8rem; color: var(--text-sec);">Cosas para las que estás guardando dinero</p></div>
+    <button class="btn-black" onclick="agregarItem('metas')">+ Nueva Meta</button>
+    <table> <tbody id="lista-metas"></tbody> </table>
+    <button class="btn-secondary" onclick="navegar('main-page')">Volver</button>
+</div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('finanzas_v3')) || { total: 0, ahorro: 0, movs: [] };
+    let db = JSON.parse(localStorage.getItem('finanzas_v_final_metas')) || { 
+        total: 0, ahorro: 0, movs: [], deudas: [], fijos: [], metas: [] 
+    };
 
     const fmt = (n) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n);
 
-    function actualizar() {
-        document.getElementById('disp-total').innerText = fmt(db.total);
-        document.getElementById('disp-ahorro').innerText = fmt(db.ahorro);
-        
-        const hoy = new Date();
-        const totalMes = db.movs
-            .filter(m => m.tipo === 'GASTO' && new Date(m.fechaFull).getMonth() === hoy.getMonth() && new Date(m.fechaFull).getFullYear() === hoy.getFullYear())
-            .reduce((acc, curr) => acc + curr.monto, 0);
-        
-        document.getElementById('disp-gastos-mes').innerText = fmt(totalMes);
-
-        const tbody = document.getElementById('lista-movs');
-        tbody.innerHTML = '';
-        db.movs.slice(-5).reverse().forEach(m => {
-            const colorMonto = m.tipo === 'INGRESO' ? 'var(--success)' : (m.tipo === 'GASTO' ? 'var(--danger)' : 'var(--accent)');
-            tbody.innerHTML += `
-                <tr>
-                    <td style="color: var(--text-sec)">${m.fechaShort}</td>
-                    <td style="font-weight: 500">${m.motivo}</td>
-                    <td class="td-monto" style="color: ${colorMonto}">${m.tipo === 'GASTO' ? '-' : '+'}${fmt(m.monto)}</td>
-                </tr>`;
-        });
-        localStorage.setItem('finanzas_v3', JSON.stringify(db));
-    }
-
-    function registrar(tipo) {
-        const motivo = prompt(`¿Motivo del ${tipo}?`);
-        if (!motivo) return;
-        const monto = parseInt(prompt(`Monto en CLP:`));
-        if (isNaN(monto) || monto <= 0) return;
-
-        if (tipo === 'ingreso') db.total += monto;
-        else if (tipo === 'gasto') db.total -= monto;
-        else if (tipo === 'ahorro') {
-            if (monto > db.total) return alert("Saldo insuficiente");
-            db.total -= monto; db.ahorro += monto;
-        }
-
-        db.movs.push({
-            fechaFull: new Date().toISOString(),
-            fechaShort: new Date().toLocaleDateString('es-CL', {day:'2-digit', month:'short'}),
-            tipo: tipo.toUpperCase(),
-            motivo: motivo,
-            monto: monto,
-            saldoSnapshot: db.total
-        });
+    function navegar(p) {
+        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+        document.getElementById(p).classList.add('active');
         actualizar();
     }
 
-    function descargarExcel() {
-        if (db.movs.length === 0) return alert("Sin datos");
-        const data = db.movs.map(m => ({
-            'FECHA': new Date(m.fechaFull).toLocaleString('es-CL'),
-            'CATEGORÍA': m.tipo,
-            'DESCRIPCIÓN': m.motivo,
-            'MONTO (CLP)': m.monto,
-            'SALDO FINAL': m.saldoSnapshot
-        }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Reporte");
-        XLSX.writeFile(wb, "Mis_Finanzas.xlsx");
+    function actualizar() {
+        // Actualizar saldos principales
+        document.getElementById('disp-total').innerText = fmt(db.total);
+        document.getElementById('disp-ahorro').innerText = fmt(db.ahorro);
+        
+        const gMes = db.movs.filter(m => m.tipo === 'GASTO' && new Date(m.fechaFull).getMonth() === new Date().getMonth())
+                           .reduce((a, b) => a + b.monto, 0);
+        document.getElementById('disp-gastos-mes').innerText = fmt(gMes);
+
+        const dPend = db.deudas.filter(i => i.estado === 'pendiente').reduce((a, b) => a + b.monto, 0);
+        const fPend = db.fijos.filter(i => i.estado === 'pendiente').reduce((a, b) => a + b.monto, 0);
+
+        document.getElementById('disp-deuda-total').innerText = fmt(dPend);
+        document.getElementById('disp-fijos-total').innerText = fmt(fPend);
+
+        if(document.getElementById('disp-deuda-page')) document.getElementById('disp-deuda-page').innerText = fmt(dPend);
+        if(document.getElementById('disp-fijos-page')) document.getElementById('disp-fijos-page').innerText = fmt(fPend);
+
+        renderLista('lista-deudas', db.deudas, 'deudas');
+        renderLista('lista-fijos', db.fijos, 'fijos');
+        renderLista('lista-metas', db.metas, 'metas');
+
+        localStorage.setItem('finanzas_v_final_metas', JSON.stringify(db));
     }
 
+    function renderLista(id, lista, key) {
+        const tb = document.getElementById(id); if(!tb) return;
+        tb.innerHTML = '';
+        lista.forEach((item, idx) => {
+            const labelEstado = key === 'metas' ? (item.estado === 'pendiente' ? 'Pendiente' : 'Lograda ✨') : item.estado;
+            tb.innerHTML += `<tr>
+                <td style="font-weight:600">${item.motivo}</td>
+                <td>${fmt(item.monto)}</td>
+                <td><span class="status-tag" style="background:${item.estado==='pendiente'?'#fff3e0':'#e8f5e9'}" onclick="toggle('${key}',${idx})">${labelEstado}</span></td>
+                <td onclick="eliminar('${key}',${idx})" style="color:var(--danger); font-weight:bold; cursor:pointer; padding-left:10px;">✕</td>
+            </tr>`;
+        });
+    }
+
+    function registrar(t) {
+        const mot = prompt("Motivo:"); const mon = parseInt(prompt("Monto CLP:"));
+        if(!mot || isNaN(mon)) return;
+        if(t==='ingreso') db.total += mon; 
+        else if(t==='gasto') db.total -= mon;
+        else if(t==='ahorro') { if(mon > db.total) return alert("Saldo insuficiente"); db.total -= mon; db.ahorro += mon; }
+        db.movs.push({tipo:t.toUpperCase(), motivo:mot, monto:mon, fechaFull: new Date().toISOString()});
+        actualizar();
+    }
+
+    function agregarItem(k) {
+        const mot = prompt(k === 'metas' ? "¿Para qué quieres ahorrar?" : "Descripción:"); 
+        const mon = parseInt(prompt("Monto:"));
+        if(mot && !isNaN(mon)) { db[k].push({motivo:mot, monto:mon, estado:'pendiente'}); actualizar(); }
+    }
+
+    function toggle(k,i) { db[k][i].estado = db[k][i].estado==='pendiente'?'completado':'pendiente'; actualizar(); }
+    function eliminar(k,i) { if(confirm("¿Eliminar este registro?")) { db[k].splice(i,1); actualizar(); } }
+
+    function renderCalendario() {
+        const ahora = new Date();
+        document.getElementById('cal-month-name').innerText = ahora.toLocaleDateString('es-CL', { month: 'long' });
+        const grid = document.getElementById('cal-days-grid');
+        grid.innerHTML = '';
+        ['D','L','M','M','J','V','S'].forEach(d => grid.innerHTML += `<div class="cal-day-name">${d}</div>`);
+        const primerDia = new Date(ahora.getFullYear(), ahora.getMonth(), 1).getDay();
+        const totalDias = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate();
+        for(let i=0; i<primerDia; i++) grid.innerHTML += `<div></div>`;
+        for(let d=1; d<=totalDias; d++) {
+            const hoy = d === ahora.getDate() ? 'cal-today' : '';
+            grid.innerHTML += `<div class="cal-day ${hoy}">${d}</div>`;
+        }
+    }
+
+    renderCalendario();
     actualizar();
 </script>
 </body>
