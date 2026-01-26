@@ -2,243 +2,271 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finanzas Control Total</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Finance Flow</title>
     <style>
         :root {
-            --bg: #f2f2f7; --card: #ffffff; --text-main: #1c1c1e; --text-sec: #8e8e93;
-            --accent: #007aff; --danger: #ff3b30; --success: #34c759; --warning: #ff9500;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #2d3436;
+            --accent: #6c5ce7;
+            --income: #00b894;
+            --expense: #ff7675;
+            --border: #edf2f7;
         }
 
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--bg); color: var(--text-main); 
-            margin: 0; padding: 20px 15px 40px 15px;
-            display: flex; flex-direction: column; align-items: center;
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
         }
 
-        .page { display: none; width: 100%; max-width: 400px; flex-direction: column; }
-        .page.active { display: flex; }
-
-        /* CABECERA Y SALDOS */
-        .header { width: 100%; margin: 10px 0 15px 0; }
-        .label-top { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-sec); }
-        .balance-main { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; }
-
-        .card-dark {
-            background: var(--text-main); color: white; border-radius: 20px; padding: 18px;
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+        .container {
+            width: 100%;
+            max-width: 500px;
         }
 
-        .info-row {
-            background: var(--card); padding: 14px 18px; border-radius: 16px;
-            display: flex; justify-content: space-between; margin-bottom: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02); font-size: 0.9rem;
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
         }
 
-        /* BOTONES */
-        .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        button { border: none; padding: 15px; border-radius: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
-        button:active { transform: scale(0.96); opacity: 0.8; }
+        /* --- CALENDARIO --- */
+        .mini-calendar {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            width: 180px;
+        }
+
+        .cal-header {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        .day { padding: 5px 0; color: #a29bfe; }
+        .date { padding: 5px 0; cursor: default; }
+        .today {
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+
+        /* --- SEMANAS --- */
+        .weeks-container {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .week-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+        }
+
+        .week-label {
+            padding: 10px 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: #f1f2f6;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .section {
+            padding: 15px 20px;
+            min-height: 80px;
+        }
+
+        .income-section { border-bottom: 1px dashed var(--border); }
         
-        .btn-in { background: #e8f5e9; color: var(--success); }
-        .btn-out { background: #ffebee; color: var(--danger); }
-        .btn-save { background: #e3f2fd; color: var(--accent); grid-column: span 2; }
-        .btn-black { background: var(--text-main); color: white; width: 100%; margin-top: 8px; }
-        .btn-secondary { background: #e5e5ea; color: black; width: 100%; margin-top: 20px; }
-
-        /* TABLAS Y RESUMEN */
-        .section-title { font-size: 1rem; font-weight: 800; margin: 25px 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 18px; overflow: hidden; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        td { padding: 12px; border-top: 1px solid var(--bg); font-size: 0.8rem; }
-        .status-tag { padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; }
-
-        /* CALENDARIO AL FINAL */
-        .cal-container {
-            width: 100%; max-width: 400px; background: var(--card);
-            border-radius: 20px; padding: 12px 15px; margin-top: 30px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.05); box-sizing: border-box;
+        .section-title {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: block;
         }
-        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .cal-month { font-size: 1.1rem; font-weight: 800; text-transform: capitalize; }
-        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
-        .cal-day-name { font-size: 0.6rem; color: var(--text-sec); font-weight: 800; padding-bottom: 4px; }
-        .cal-day { font-size: 0.75rem; font-weight: 500; padding: 5px 0; border-radius: 8px; }
-        .cal-today { background: var(--accent); color: white; font-weight: 700; }
+
+        .income-section .section-title { color: var(--income); }
+        .expense-section .section-title { color: var(--expense); }
+
+        .entry-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .concept { color: #636e72; }
+        .amount { font-weight: 600; }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        input {
+            border: 1px solid var(--border);
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--accent); }
+
+        button {
+            background: var(--text);
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.8; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
 
-<div id="main-page" class="page active">
-    <div class="header">
-        <div class="label-top">Disponible</div>
-        <div class="balance-main" id="disp-total">$0</div>
-    </div>
-
-    <div class="card-dark">
-        <span style="font-size: 0.75rem; opacity: 0.8;">GASTOS DEL MES</span>
-        <span id="disp-gastos-mes" style="font-weight: 700;">$0</span>
-    </div>
-
-    <div class="info-row"><span>Ahorro Acumulado</span><span id="disp-ahorro" style="font-weight:700; color:var(--accent)">$0</span></div>
-    <div class="info-row"><span>Deuda Histórica</span><span id="disp-deuda-total" style="font-weight:700; color:var(--danger)">$0</span></div>
-    <div class="info-row"><span>Gastos fijos del mes</span><span id="disp-fijos-total" style="font-weight:700; color:var(--warning)">$0</span></div>
-
-    <div class="actions-grid">
-        <button class="btn-in" onclick="registrar('ingreso')">Ingreso (+)</button>
-        <button class="btn-out" onclick="registrar('gasto')">Gasto (-)</button>
-        <button class="btn-save" onclick="registrar('ahorro')">Ahorrar</button>
-    </div>
-
-    <button class="btn-black" onclick="navegar('deuda-page')">Gestionar Deudas</button>
-    <button class="btn-black" onclick="navegar('fijos-page')">Gastos Fijos</button>
-    <button class="btn-black" style="background: var(--accent);" onclick="navegar('metas-page')">🎯 Metas de Ahorro</button>
-
-    <div class="section-title">Últimos Movimientos</div>
-    <table> <tbody id="lista-movs"></tbody> </table>
-
-    <div class="cal-container">
-        <div class="cal-header">
-            <div class="cal-month" id="cal-month-name">Mes</div>
-            <div style="font-size: 0.65rem; font-weight: 700; color: var(--accent);">HOY</div>
+<div class="container">
+    <header>
+        <div>
+            <h1 style="margin:0; font-size: 1.5rem;">Finanzas</h1>
+            <p id="current-month" style="margin:0; color: #b2bec3; font-size: 0.9rem;"></p>
         </div>
-        <div class="cal-grid" id="cal-days-grid"></div>
-    </div>
+        
+        <div class="mini-calendar">
+            <div class="cal-header" id="cal-month-name"></div>
+            <div class="days-grid" id="calendar-days">
+                </div>
+        </div>
+    </header>
 
-    <button class="btn-secondary" style="margin-top: 30px; font-size: 0.75rem;" onclick="descargarExcel()">📥 Descargar Reporte Excel</button>
-</div>
-
-<div id="deuda-page" class="page">
-    <div class="header"><h3>Deudas</h3><h2 id="disp-deuda-page">$0</h2></div>
-    <button class="btn-black" onclick="agregarItem('deudas')">+ Nueva Deuda</button>
-    <table> <tbody id="lista-deudas"></tbody> </table>
-    <button class="btn-secondary" onclick="navegar('main-page')">Volver</button>
-</div>
-
-<div id="fijos-page" class="page">
-    <div class="header"><h3>Gastos Fijos</h3><h2 id="disp-fijos-page">$0</h2></div>
-    <button class="btn-black" onclick="agregarItem('fijos')">+ Nuevo Gasto Fijo</button>
-    <table> <tbody id="lista-fijos"></tbody> </table>
-    <button class="btn-secondary" onclick="navegar('main-page')">Volver</button>
-</div>
-
-<div id="metas-page" class="page">
-    <div class="header"><h3>Metas de Ahorro</h3></div>
-    <button class="btn-black" onclick="agregarItem('metas')">+ Nueva Meta</button>
-    <table> <tbody id="lista-metas"></tbody> </table>
-    <button class="btn-secondary" onclick="navegar('main-page')">Volver</button>
+    <div class="weeks-container" id="weeks-wrapper">
+        </div>
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('finanzas_v_completa')) || { 
-        total: 0, ahorro: 0, movs: [], deudas: [], fijos: [], metas: [] 
-    };
+    // --- LÓGICA DEL CALENDARIO ---
+    const date = new Date();
+    const currentDay = date.getDate();
+    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    
+    document.getElementById('cal-month-name').innerText = monthNames[date.getMonth()];
+    document.getElementById('current-month').innerText = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
 
-    const fmt = (n) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n);
+    const daysContainer = document.getElementById('calendar-days');
+    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
-    function navegar(p) {
-        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
-        document.getElementById(p).classList.add('active');
-        actualizar();
+    for (let i = 1; i <= lastDay; i++) {
+        const dayDiv = document.createElement('div');
+        dayDiv.classList.add('date');
+        if (i === currentDay) dayDiv.classList.add('today');
+        dayDiv.innerText = i;
+        daysContainer.appendChild(dayDiv);
     }
 
-    function actualizar() {
-        document.getElementById('disp-total').innerText = fmt(db.total);
-        document.getElementById('disp-ahorro').innerText = fmt(db.ahorro);
-        
-        const gMes = db.movs.filter(m => m.tipo === 'GASTO' && new Date(m.fechaFull).getMonth() === new Date().getMonth())
-                           .reduce((a, b) => a + b.monto, 0);
-        document.getElementById('disp-gastos-mes').innerText = fmt(gMes);
+    // --- LÓGICA DE FINANZAS ---
+    const weeksWrapper = document.getElementById('weeks-wrapper');
+    let totalBalance = 0;
 
-        const dPend = db.deudas.filter(i => i.estado === 'pendiente').reduce((a, b) => a + b.monto, 0);
-        const fPend = db.fijos.filter(i => i.estado === 'pendiente').reduce((a, b) => a + b.monto, 0);
-
-        document.getElementById('disp-deuda-total').innerText = fmt(dPend);
-        document.getElementById('disp-fijos-total').innerText = fmt(fPend);
-
-        if(document.getElementById('disp-deuda-page')) document.getElementById('disp-deuda-page').innerText = fmt(dPend);
-        if(document.getElementById('disp-fijos-page')) document.getElementById('disp-fijos-page').innerText = fmt(fPend);
-
-        renderMovs();
-        renderLista('lista-deudas', db.deudas, 'deudas');
-        renderLista('lista-fijos', db.fijos, 'fijos');
-        renderLista('lista-metas', db.metas, 'metas');
-
-        localStorage.setItem('finanzas_v_completa', JSON.stringify(db));
+    for (let i = 1; i <= 4; i++) {
+        const weekCard = document.createElement('div');
+        weekCard.className = 'week-card';
+        weekCard.innerHTML = `
+            <div class="week-label">
+                <span>SEMANA ${i}</span>
+                <span id="balance-w${i}">Saldo: $0</span>
+            </div>
+            <div class="section income-section">
+                <span class="section-title">Ingresos</span>
+                <div id="inc-list-w${i}"></div>
+                <div class="input-group">
+                    <input type="text" placeholder="Concepto" id="inc-con-w${i}" style="flex:2">
+                    <input type="number" placeholder="$" id="inc-amt-w${i}" style="flex:1">
+                    <button onclick="addEntry(${i}, 'inc')">+</button>
+                </div>
+            </div>
+            <div class="section expense-section">
+                <span class="section-title">Gastos</span>
+                <div id="exp-list-w${i}"></div>
+                <div class="input-group">
+                    <input type="text" placeholder="Concepto" id="exp-con-w${i}" style="flex:2">
+                    <input type="number" placeholder="$" id="exp-amt-w${i}" style="flex:1">
+                    <button onclick="addEntry(${i}, 'exp')" style="background:var(--expense)">+</button>
+                </div>
+            </div>
+        `;
+        weeksWrapper.appendChild(weekCard);
     }
 
-    function renderMovs() {
-        const tb = document.getElementById('lista-movs');
-        tb.innerHTML = '';
-        // Mostramos solo los últimos 5 movimientos
-        db.movs.slice(-5).reverse().forEach((m, idx) => {
-            const color = m.tipo === 'INGRESO' ? 'var(--success)' : (m.tipo === 'AHORRO' ? 'var(--accent)' : 'var(--danger)');
-            tb.innerHTML += `<tr>
-                <td>${m.motivo}</td>
-                <td style="color:${color}; font-weight:700">${m.tipo === 'INGRESO' ? '+' : '-'}${fmt(m.monto)}</td>
-                <td style="color:var(--text-sec); font-size:0.6rem">${new Date(m.fechaFull).toLocaleDateString()}</td>
-            </tr>`;
-        });
+    const data = { 1: {inc: 0, exp: 0}, 2: {inc: 0, exp: 0}, 3: {inc: 0, exp: 0}, 4: {inc: 0, exp: 0} };
+
+    function addEntry(week, type) {
+        const concept = document.getElementById(`${type}-con-w${week}`).value;
+        const amount = parseFloat(document.getElementById(`${type}-amt-w${week}`).value);
+
+        if (!concept || isNaN(amount)) return;
+
+        const list = document.getElementById(`${type}-list-w${week}`);
+        const row = document.createElement('div');
+        row.className = 'entry-row';
+        row.innerHTML = `<span class="concept">${concept}</span><span class="amount">${type === 'inc' ? '+' : '-'}$${amount}</span>`;
+        list.appendChild(row);
+
+        data[week][type] += amount;
+        updateBalances();
+
+        // Limpiar inputs
+        document.getElementById(`${type}-con-w${week}`).value = '';
+        document.getElementById(`${type}-amt-w${week}`).value = '';
     }
 
-    function renderLista(id, lista, key) {
-        const tb = document.getElementById(id); if(!tb) return;
-        tb.innerHTML = '';
-        lista.forEach((item, idx) => {
-            tb.innerHTML += `<tr>
-                <td style="font-weight:600">${item.motivo}</td>
-                <td>${fmt(item.monto)}</td>
-                <td><span class="status-tag" style="background:${item.estado==='pendiente'?'#fff3e0':'#e8f5e9'}" onclick="toggle('${key}',${idx})">${item.estado}</span></td>
-                <td onclick="eliminar('${key}',${idx})" style="color:var(--danger); cursor:pointer">✕</td>
-            </tr>`;
-        });
-    }
-
-    function registrar(t) {
-        const mot = prompt("Motivo:"); const mon = parseInt(prompt("Monto CLP:"));
-        if(!mot || isNaN(mon)) return;
-        if(t==='ingreso') db.total += mon; 
-        else if(t==='gasto') db.total -= mon;
-        else if(t==='ahorro') { if(mon > db.total) return alert("Saldo insuficiente"); db.total -= mon; db.ahorro += mon; }
-        db.movs.push({tipo:t.toUpperCase(), motivo:mot, monto:mon, fechaFull: new Date().toISOString()});
-        actualizar();
-    }
-
-    function agregarItem(k) {
-        const mot = prompt("Descripción:"); const mon = parseInt(prompt("Monto:"));
-        if(mot && !isNaN(mon)) { db[k].push({motivo:mot, monto:mon, estado:'pendiente'}); actualizar(); }
-    }
-
-    function toggle(k,i) { db[k][i].estado = db[k][i].estado==='pendiente'?'pagado':'pendiente'; actualizar(); }
-    function eliminar(k,i) { if(confirm("¿Eliminar?")) { db[k].splice(i,1); actualizar(); } }
-
-    function descargarExcel() {
-        const dataMovs = db.movs.map(m => ({ Fecha: new Date(m.fechaFull).toLocaleDateString(), Tipo: m.tipo, Motivo: m.motivo, Monto: m.monto }));
-        const ws = XLSX.utils.json_to_sheet(dataMovs);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Movimientos");
-        XLSX.writeFile(wb, "Finanzas_Reporte.xlsx");
-    }
-
-    function renderCalendario() {
-        const ahora = new Date();
-        document.getElementById('cal-month-name').innerText = ahora.toLocaleDateString('es-CL', { month: 'long' });
-        const grid = document.getElementById('cal-days-grid');
-        grid.innerHTML = '';
-        ['D','L','M','M','J','V','S'].forEach(d => grid.innerHTML += `<div class="cal-day-name">${d}</div>`);
-        const primerDia = new Date(ahora.getFullYear(), ahora.getMonth(), 1).getDay();
-        const totalDias = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate();
-        for(let i=0; i<primerDia; i++) grid.innerHTML += `<div></div>`;
-        for(let d=1; d<=totalDias; d++) {
-            const hoy = d === ahora.getDate() ? 'cal-today' : '';
-            grid.innerHTML += `<div class="cal-day ${hoy}">${d}</div>`;
+    function updateBalances() {
+        let carryOver = 0;
+        for (let i = 1; i <= 4; i++) {
+            const weekBalance = carryOver + data[i].inc - data[i].exp;
+            document.getElementById(`balance-w${i}`).innerText = `Saldo: $${weekBalance.toFixed(2)}`;
+            carryOver = weekBalance; // El final de esta semana es el inicio de la siguiente
         }
     }
-
-    renderCalendario();
-    actualizar();
 </script>
+
 </body>
 </html>
 
