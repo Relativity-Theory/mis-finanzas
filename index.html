@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimal Finance Flow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Finanzas CLP - MultiMes</title>
     <style>
         :root {
             --bg: #f8f9fa;
@@ -20,144 +20,121 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
-            padding: 40px 20px;
         }
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-        }
+        .container { width: 100%; max-width: 500px; }
 
         header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 30px;
         }
 
-        /* --- CALENDARIO --- */
-        .mini-calendar {
-            background: var(--card-bg);
-            padding: 15px;
+        /* NAVEGACIÓN Y CALENDARIO */
+        .calendar-box {
+            background: white;
+            padding: 12px;
             border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
             width: 180px;
         }
 
+        .cal-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--accent);
+            padding: 0 5px;
+        }
+
         .cal-header {
-            font-size: 0.8rem;
-            font-weight: 700;
+            font-size: 0.7rem;
+            font-weight: 800;
             text-transform: uppercase;
-            margin-bottom: 10px;
-            text-align: center;
-            letter-spacing: 1px;
+            color: var(--text);
         }
 
         .days-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            font-size: 0.7rem;
+            gap: 2px;
+            font-size: 0.6rem;
             text-align: center;
         }
 
-        .day { padding: 5px 0; color: #a29bfe; }
-        .date { padding: 5px 0; cursor: default; }
-        .today {
-            background: var(--accent);
-            color: white;
-            border-radius: 50%;
-            font-weight: bold;
-        }
+        .day-name { font-weight: 800; font-size: 0.5rem; margin-bottom: 4px; }
+        .date { padding: 4px 0; color: #b2bec3; }
+        .today { background: var(--accent); color: white; border-radius: 50%; font-weight: bold; }
 
-        /* --- SEMANAS --- */
-        .weeks-container {
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
+        /* TARJETAS */
         .week-card {
             background: var(--card-bg);
-            border-radius: 16px;
-            overflow: hidden;
+            border-radius: 20px;
+            margin-bottom: 25px;
             border: 1px solid var(--border);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.03);
+            overflow: hidden;
         }
 
         .week-label {
-            padding: 10px 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
+            padding: 14px 20px;
+            font-size: 0.7rem;
+            font-weight: 800;
             background: #f1f2f6;
             display: flex;
             justify-content: space-between;
+            color: #636e72;
         }
 
-        .section {
-            padding: 15px 20px;
-            min-height: 80px;
-        }
-
+        .section { padding: 18px 20px; }
         .income-section { border-bottom: 1px dashed var(--border); }
-        
-        .section-title {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            display: block;
-        }
-
+        .section-title { font-size: 0.65rem; text-transform: uppercase; font-weight: 800; margin-bottom: 12px; display: block; }
         .income-section .section-title { color: var(--income); }
         .expense-section .section-title { color: var(--expense); }
 
         .entry-row {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             font-size: 0.9rem;
-            margin-bottom: 5px;
-            animation: fadeIn 0.3s ease;
+            margin-bottom: 8px;
         }
 
-        .concept { color: #636e72; }
-        .amount { font-weight: 600; }
+        .concept { color: #636e72; cursor: pointer; flex: 1; }
+        .amount { font-weight: 700; }
+        .delete-icon { color: #dfe6e9; margin-left: 10px; cursor: pointer; }
 
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
+        .input-group { display: flex; gap: 8px; margin-top: 15px; }
         input {
             border: 1px solid var(--border);
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-size: 0.8rem;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 16px;
             outline: none;
+            background: #fafafa;
+            width: 100%;
         }
 
-        input:focus { border-color: var(--accent); }
-
-        button {
+        .add-btn {
             background: var(--text);
             color: white;
             border: none;
-            padding: 5px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: opacity 0.2s;
-        }
-
-        button:hover { opacity: 0.8; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+            width: 48px;
+            height: 45px;
+            border-radius: 12px;
+            font-size: 1.4rem;
         }
     </style>
 </head>
@@ -166,107 +143,159 @@
 <div class="container">
     <header>
         <div>
-            <h1 style="margin:0; font-size: 1.5rem;">Finanzas</h1>
-            <p id="current-month" style="margin:0; color: #b2bec3; font-size: 0.9rem;"></p>
+            <h1 style="margin:0; font-size: 1.5rem; letter-spacing: -1px;">Finanzas CLP</h1>
+            <p id="view-title" style="margin:0; color: var(--accent); font-size: 0.9rem; font-weight: 700; text-transform: capitalize;"></p>
         </div>
-        
-        <div class="mini-calendar">
-            <div class="cal-header" id="cal-month-name"></div>
+        <div class="calendar-box">
+            <div class="cal-nav">
+                <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+                <div class="cal-header" id="cal-month-name"></div>
+                <button class="nav-btn" onclick="changeMonth(1)">›</button>
+            </div>
             <div class="days-grid" id="calendar-days">
-                </div>
+                <div class="day-name">L</div><div class="day-name">M</div><div class="day-name">X</div>
+                <div class="day-name">J</div><div class="day-name">V</div><div class="day-name">S</div>
+                <div class="day-name">D</div>
+            </div>
         </div>
     </header>
 
-    <div class="weeks-container" id="weeks-wrapper">
-        </div>
+    <div id="weeks-wrapper"></div>
 </div>
 
 <script>
-    // --- LÓGICA DEL CALENDARIO ---
-    const date = new Date();
-    const currentDay = date.getDate();
-    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const formatter = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 });
+    const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
     
-    document.getElementById('cal-month-name').innerText = monthNames[date.getMonth()];
-    document.getElementById('current-month').innerText = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    // Estado global de la vista
+    let viewDate = new Date(); // Fecha que estamos viendo
+    const today = new Date();  // Fecha real de hoy para el círculo
+    let weeksData = [];
 
-    const daysContainer = document.getElementById('calendar-days');
-    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-
-    for (let i = 1; i <= lastDay; i++) {
-        const dayDiv = document.createElement('div');
-        dayDiv.classList.add('date');
-        if (i === currentDay) dayDiv.classList.add('today');
-        dayDiv.innerText = i;
-        daysContainer.appendChild(dayDiv);
+    function initData() {
+        const key = `finanzas_v5_${viewDate.getFullYear()}_${viewDate.getMonth()}`;
+        weeksData = JSON.parse(localStorage.getItem(key)) || [
+            { inc: [], exp: [] }, { inc: [], exp: [] }, { inc: [], exp: [] }, { inc: [], exp: [] }
+        ];
     }
 
-    // --- LÓGICA DE FINANZAS ---
-    const weeksWrapper = document.getElementById('weeks-wrapper');
-    let totalBalance = 0;
-
-    for (let i = 1; i <= 4; i++) {
-        const weekCard = document.createElement('div');
-        weekCard.className = 'week-card';
-        weekCard.innerHTML = `
-            <div class="week-label">
-                <span>SEMANA ${i}</span>
-                <span id="balance-w${i}">Saldo: $0</span>
-            </div>
-            <div class="section income-section">
-                <span class="section-title">Ingresos</span>
-                <div id="inc-list-w${i}"></div>
-                <div class="input-group">
-                    <input type="text" placeholder="Concepto" id="inc-con-w${i}" style="flex:2">
-                    <input type="number" placeholder="$" id="inc-amt-w${i}" style="flex:1">
-                    <button onclick="addEntry(${i}, 'inc')">+</button>
-                </div>
-            </div>
-            <div class="section expense-section">
-                <span class="section-title">Gastos</span>
-                <div id="exp-list-w${i}"></div>
-                <div class="input-group">
-                    <input type="text" placeholder="Concepto" id="exp-con-w${i}" style="flex:2">
-                    <input type="number" placeholder="$" id="exp-amt-w${i}" style="flex:1">
-                    <button onclick="addEntry(${i}, 'exp')" style="background:var(--expense)">+</button>
-                </div>
-            </div>
-        `;
-        weeksWrapper.appendChild(weekCard);
+    function save() {
+        const key = `finanzas_v5_${viewDate.getFullYear()}_${viewDate.getMonth()}`;
+        localStorage.setItem(key, JSON.stringify(weeksData));
+        render();
     }
 
-    const data = { 1: {inc: 0, exp: 0}, 2: {inc: 0, exp: 0}, 3: {inc: 0, exp: 0}, 4: {inc: 0, exp: 0} };
-
-    function addEntry(week, type) {
-        const concept = document.getElementById(`${type}-con-w${week}`).value;
-        const amount = parseFloat(document.getElementById(`${type}-amt-w${week}`).value);
-
-        if (!concept || isNaN(amount)) return;
-
-        const list = document.getElementById(`${type}-list-w${week}`);
-        const row = document.createElement('div');
-        row.className = 'entry-row';
-        row.innerHTML = `<span class="concept">${concept}</span><span class="amount">${type === 'inc' ? '+' : '-'}$${amount}</span>`;
-        list.appendChild(row);
-
-        data[week][type] += amount;
-        updateBalances();
-
-        // Limpiar inputs
-        document.getElementById(`${type}-con-w${week}`).value = '';
-        document.getElementById(`${type}-amt-w${week}`).value = '';
+    function changeMonth(dir) {
+        viewDate.setMonth(viewDate.getMonth() + dir);
+        initData();
+        buildCalendar();
+        render();
     }
 
-    function updateBalances() {
-        let carryOver = 0;
-        for (let i = 1; i <= 4; i++) {
-            const weekBalance = carryOver + data[i].inc - data[i].exp;
-            document.getElementById(`balance-w${i}`).innerText = `Saldo: $${weekBalance.toFixed(2)}`;
-            carryOver = weekBalance; // El final de esta semana es el inicio de la siguiente
+    function buildCalendar() {
+        document.getElementById('cal-month-name').innerText = months[viewDate.getMonth()];
+        document.getElementById('view-title').innerText = `${months[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+        
+        const grid = document.getElementById('calendar-days');
+        // Limpiar solo los números, mantener los nombres de los días
+        const dayNames = grid.querySelectorAll('.day-name');
+        grid.innerHTML = '';
+        dayNames.forEach(n => grid.appendChild(n));
+
+        const firstDay = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay();
+        const lastDay = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
+        
+        let offset = firstDay === 0 ? 6 : firstDay - 1;
+
+        for (let x = 0; x < offset; x++) grid.appendChild(document.createElement('div'));
+
+        for (let i = 1; i <= lastDay; i++) {
+            const d = document.createElement('div');
+            d.className = 'date';
+            // Resaltar solo si es el mes y año real actual
+            if (i === today.getDate() && viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear()) {
+                d.classList.add('today');
+            }
+            d.innerText = i;
+            grid.appendChild(d);
         }
     }
-</script>
 
+    function render() {
+        const wrapper = document.getElementById('weeks-wrapper');
+        wrapper.innerHTML = '';
+        let balance = 0;
+
+        // Calcular el primer lunes del mes que estamos viendo
+        let firstMonday = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+        let day = firstMonday.getDay();
+        let diff = firstMonday.getDate() - day + (day == 0 ? -6 : 1);
+        firstMonday.setDate(diff);
+
+        weeksData.forEach((week, idx) => {
+            balance += (week.inc.reduce((s, m) => s + m.a, 0) - week.exp.reduce((s, m) => s + m.a, 0));
+
+            let dStart = new Date(firstMonday);
+            dStart.setDate(dStart.getDate() + (idx * 7));
+            let dEnd = new Date(dStart);
+            dEnd.setDate(dEnd.getDate() + 6);
+
+            const card = document.createElement('div');
+            card.className = 'week-card';
+            card.innerHTML = `
+                <div class="week-label">
+                    <span>${dStart.getDate()} AL ${dEnd.getDate()} DE ${months[dEnd.getMonth()].toUpperCase()}</span>
+                    <span style="color:var(--accent)">SALDO: ${formatter.format(balance)}</span>
+                </div>
+                <div class="section income-section">
+                    <span class="section-title">Ingresos</span>
+                    <div>${week.inc.map((m, i) => `
+                        <div class="entry-row">
+                            <span class="concept" onclick="edit(${idx},'inc',${i})">${m.c}</span>
+                            <span class="amount" style="color:var(--income)">+${formatter.format(m.a)} <span class="delete-icon" onclick="del(${idx},'inc',${i})">✕</span></span>
+                        </div>`).join('')}</div>
+                    <div class="input-group">
+                        <input type="text" placeholder="Concepto" id="in-c-${idx}">
+                        <input type="number" placeholder="$" id="in-a-${idx}">
+                        <button class="add-btn" onclick="add(${idx},'inc')">+</button>
+                    </div>
+                </div>
+                <div class="section expense-section">
+                    <span class="section-title">Gastos</span>
+                    <div>${week.exp.map((m, i) => `
+                        <div class="entry-row">
+                            <span class="concept" onclick="edit(${idx},'exp',${i})">${m.c}</span>
+                            <span class="amount" style="color:var(--expense)">-${formatter.format(m.a)} <span class="delete-icon" onclick="del(${idx},'exp',${i})">✕</span></span>
+                        </div>`).join('')}</div>
+                    <div class="input-group">
+                        <input type="text" placeholder="Concepto" id="ex-c-${idx}">
+                        <input type="number" placeholder="$" id="ex-a-${idx}">
+                        <button class="add-btn" onclick="add(${idx},'exp')" style="background:var(--expense)">+</button>
+                    </div>
+                </div>
+            `;
+            wrapper.appendChild(card);
+        });
+    }
+
+    window.add = (idx, type) => {
+        const c = document.getElementById(`${type === 'inc' ? 'in' : 'ex'}-c-${idx}`).value;
+        const a = parseInt(document.getElementById(`${type === 'inc' ? 'in' : 'ex'}-a-${idx}`).value);
+        if (c && a) { weeksData[idx][type].push({c, a}); save(); }
+    };
+
+    window.del = (w, t, i) => { if(confirm('¿Borrar?')) { weeksData[w][t].splice(i, 1); save(); } };
+    window.edit = (w, t, i) => {
+        const item = weeksData[w][t][i];
+        const nC = prompt("Editar:", item.c);
+        const nA = prompt("Monto:", item.a);
+        if (nC && nA) { weeksData[w][t][i] = { c: nC, a: parseInt(nA) }; save(); }
+    };
+
+    // Iniciar
+    initData();
+    buildCalendar();
+    render();
+</script>
 </body>
 </html>
-
